@@ -58,14 +58,14 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+# 디렉토리 이동
+cd $DIR_PATH
+
 trap 'handle_sigint' SIGINT
 # 커맨드별 분기처리
 case $COMMAND in
 start)
     trap 'handle_sigint_start' SIGINT
-    # 디렉토리 이동
-    cd $DIR_PATH
-
     # 실행중이 앱이 있는지에 따라 분기하여 실행
     start_app() {
         if pm2 jlist | grep -q "\"name\":\"$APP_NAME\""; then
