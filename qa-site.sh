@@ -85,6 +85,7 @@ start)
     # 브랜치 상태 최신화
     git branch --set-upstream-to=origin/$CURRENT_BRANCH $CURRENT_BRANCH
     git pull
+    npm install
     # 실행중인 앱에 빌드가 영향을 끼치지 않도록 next config 수정
     cp $CONFIG_PATH $CONFIG_PATH.bak
     sed -i '/const nextConfig = {/a distDir: ".next_temp",' $CONFIG_PATH
