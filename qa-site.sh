@@ -63,7 +63,6 @@ trap 'handle_sigint' SIGINT
 case $COMMAND in
 start)
     trap 'handle_sigint_start' SIGINT
-    trap 'handle_sigint' SIGKILL
     # 디렉토리 이동
     cd $DIR_PATH
 
