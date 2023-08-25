@@ -19,16 +19,20 @@ handle_sigint() {
 }
 delete_temp_files() {
     # 임시 설정파일 삭제
-    if [ ! -e "$CONFIG_PATH.bak" ]; then
-        return
+    if [ -e "$CONFIG_PATH.bak" ]; then
+        mv $CONFIG_PATH.bak $CONFIG_PATH
     fi
-    mv $CONFIG_PATH.bak $CONFIG_PATH
 
     # 임시 빌드파일 삭제
     rm -rf $DIR_PATH/src/.next_temp
     if [ -d "$DIR_PATH/src/.next.bak" ]; then
         rm -rf $DIR_PATH/src/.next
         mv $DIR_PATH/src/.next.bak $DIR_PATH/src/.next
+    fi
+
+    # 빌드 로그 삭제
+    if [ -e "$TEMP_PATH" ]; then
+        rm -rf $TEMP_PATH
     fi
 }
 handle_sigint_start() {
