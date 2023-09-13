@@ -6,9 +6,6 @@ CONFIG_PATH="$DIR_PATH/config/next.config.js"
 TEMP_PATH="/workspace/temp.txt"
 APP_PATH="$DIR_PATH/src/pages/_app.jsx"
 
-# 현재 브랜치 이름 받아오기
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
 # 인자
 COMMAND=$1
 N_OPTION=false
@@ -97,8 +94,12 @@ start)
         exit 0
     fi
 
+    # release 브랜치 받아오기
+    git fetch
+    git checkout $(git ls-remote --heads origin | awk -F/ '/\/release\// {print $3"/"$4}')
     # 브랜치 상태 최신화
-    git branch --set-upstream-to=origin/$CURRENT_BRANCH $CURRENT_BRANCH
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    git branch --set-upstream-to=origin/$current_branch $current_branch
     git pull
     npm install
     # inspx 설치

@@ -3,9 +3,6 @@
 APP_NAME="exp-server"
 DIR_PATH="/workspace/exp-server-qa"
 
-# 현재 브랜치 이름 받아오기
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
 # 인자
 COMMAND=$1
 N_OPTION=false
@@ -37,13 +34,13 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-# 디렉토리 이동
-cd $DIR_PATH
-
 trap 'handle_sigint' SIGINT
 # 커맨드별 분기처리
 case $COMMAND in
 start)
+    # 디렉토리 이동
+    cd $DIR_PATH
+
     # 실행중인 앱이 있는지에 따라 분기하여 실행
     start_app() {
         if pm2 jlist | grep -q "\"name\":\"$APP_NAME\""; then
@@ -59,8 +56,12 @@ start)
         exit 0
     fi
 
+    # release 브랜치 받아오기
+    git fetch
+    git checkout $(git ls-remote --heads origin | awk -F/ '/\/release\// {print $3"/"$4}')
     # 브랜치 상태 최신화
-    git branch --set-upstream-to=origin/$CURRENT_BRANCH $CURRENT_BRANCH
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    git branch --set-upstream-to=origin/$current_branch $current_branch
     git pull
     yarn
 
