@@ -4,6 +4,7 @@ APP_NAME="exp-site"
 DIR_PATH="/workspace/exp-site-qa"
 CONFIG_PATH="$DIR_PATH/config/next.config.js"
 TEMP_PATH="/workspace/temp.txt"
+APP_PATH="$DIR_PATH/src/pages/_app.jsx"
 
 # 현재 브랜치 이름 받아오기
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -21,6 +22,17 @@ delete_temp_files() {
     # 임시 설정파일 삭제
     if [ -e "$CONFIG_PATH.bak" ]; then
         mv $CONFIG_PATH.bak $CONFIG_PATH
+    fi
+
+    # package.json 복구
+    if [ -e "$DIR_PATH/package.json.bak" ]; then
+        mv $DIR_PATH/package.json.bak $DIR_PATH/package.json
+        mv $DIR_PATH/package-lock.json.bak $DIR_PATH/package-lock.json
+    fi
+
+    # _app.jsx 복구
+    if [ -e "$APP_PATH.bak" ]; then
+        mv $APP_PATH.bak $APP_PATH
     fi
 
     # 임시 빌드파일 삭제
@@ -89,6 +101,13 @@ start)
     git branch --set-upstream-to=origin/$CURRENT_BRANCH $CURRENT_BRANCH
     git pull
     npm install
+    # inspx 설치
+    cp $DIR_PATH/package.json $DIR_PATH/package.json.bak
+    cp $DIR_PATH/package-lock.json $DIR_PATH/package-lock.json.bak
+    npm install inspx --save
+    # inspx 적용
+    cp $APP_PATH $APP_PATH.bak
+    sed -i -e '1s/^/import Inspect from '\''inspx'\'';\n/' -e "s/<>/<Inspect disabled={false}>/g" -e "s/<\/>/<\/Inspect>/g" $APP_PATH
     # 실행중인 앱에 빌드가 영향을 끼치지 않도록 next config 수정
     cp $CONFIG_PATH $CONFIG_PATH.bak
     sed -i '/const nextConfig = {/a distDir: ".next_temp",' $CONFIG_PATH
