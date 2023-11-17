@@ -5,15 +5,18 @@ DIR_PATH="/workspace/exp-site-qa"
 CONFIG_PATH="$DIR_PATH/config/next.config.js"
 TEMP_PATH="/workspace/temp.txt"
 APP_PATH="$DIR_PATH/src/pages/_app.jsx"
+STATE_PATH="/workspace/script.state"
 
 # 인자
 COMMAND=$1
 N_OPTION=false
 
 # SIGINT 핸들러
-handle_sigint() {
-    echo ""
-    echo "작업을 중지합니다"
+delete_state_file() {
+    # 스크립트 상태 파일 삭제
+    if [ -e "$STATE_PATH" ]; then
+        rm $STATE_PATH
+    fi
 }
 delete_temp_files() {
     # 임시 설정파일 삭제
@@ -44,6 +47,11 @@ delete_temp_files() {
         rm -rf $TEMP_PATH
     fi
 }
+handle_sigint() {
+    echo ""
+    echo "작업을 중지합니다"
+    delete_state_file
+}
 handle_sigint_start() {
     handle_sigint
     delete_temp_files
@@ -71,13 +79,23 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-# 디렉토리 이동
-cd $DIR_PATH
-
 trap 'handle_sigint' SIGINT
+
+# 스크립트 실행중 여부 확인
+if [ -e "$STATE_PATH" ]; then
+    echo "스크립트가 이미 실행중입니다."
+    exit 1
+fi
+
+# 스크립트 상태 저장
+touch $STATE_PATH
+echo "$COMMAND" >>$STATE_PATH
+
 # 커맨드별 분기처리
 case $COMMAND in
 start)
+    # 디렉토리 이동
+    cd $DIR_PATH
     trap 'handle_sigint_start' SIGINT
     # 실행중이 앱이 있는지에 따라 분기하여 실행
     start_app() {
@@ -91,6 +109,7 @@ start)
     # --no-build 옵션 있으면 바로 실행
     if $N_OPTION; then
         start_app
+        delete_state_file
         exit 0
     fi
 
@@ -140,3 +159,5 @@ stop)
     fi
     ;;
 esac
+
+delete_state_file

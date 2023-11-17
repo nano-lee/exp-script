@@ -2,15 +2,23 @@
 
 APP_NAME="exp-server"
 DIR_PATH="/workspace/exp-server-qa"
+STATE_PATH="/workspace/script.state"
 
 # 인자
 COMMAND=$1
 N_OPTION=false
 
 # SIGINT 핸들러
+delete_state_file() {
+    # 스크립트 상태 파일 삭제
+    if [ -e "$STATE_PATH" ]; then
+        rm $STATE_PATH
+    fi
+}
 handle_sigint() {
     echo ""
     echo "작업을 중지합니다"
+    delete_state_file
 }
 
 # 커맨드 없으면 중료
@@ -35,6 +43,17 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 trap 'handle_sigint' SIGINT
+
+# 스크립트 실행중 여부 확인
+if [ -e "$STATE_PATH" ]; then
+    echo "스크립트가 이미 실행중입니다."
+    exit 1
+fi
+
+# 스크립트 상태 저장
+touch $STATE_PATH
+echo "$COMMAND" >>$STATE_PATH
+
 # 커맨드별 분기처리
 case $COMMAND in
 start)
@@ -53,6 +72,7 @@ start)
     # --no-build 옵션 있으면 바로 실행
     if $N_OPTION; then
         start_app
+        delete_state_file
         exit 0
     fi
 
@@ -83,3 +103,5 @@ stop)
     fi
     ;;
 esac
+
+delete_state_file
