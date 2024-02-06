@@ -1,6 +1,7 @@
 #!/bin/bash
 
 APP_NAME="exp-site"
+STORYBOOK_APP_NAME="exp-storybook"
 DIR_PATH="/workspace/exp-site-qa"
 CONFIG_PATH="$DIR_PATH/config/next.config.js"
 TEMP_PATH="/workspace/temp.txt"
@@ -36,10 +37,10 @@ delete_temp_files() {
     fi
 
     # 임시 빌드파일 삭제
-    rm -rf $DIR_PATH/src/.next_temp
-    if [ -d "$DIR_PATH/src/.next.bak" ]; then
-        rm -rf $DIR_PATH/src/.next
-        mv $DIR_PATH/src/.next.bak $DIR_PATH/src/.next
+    rm -rf $DIR_PATH/.next_temp
+    if [ -d "$DIR_PATH/.next.bak" ]; then
+        rm -rf $DIR_PATH/.next
+        mv $DIR_PATH/.next.bak $DIR_PATH/.next
     fi
 
     # 빌드 로그 삭제
@@ -105,10 +106,19 @@ start)
             pm2 start
         fi
     }
+    start_storybook() {
+        npm run build:storybook
+        if pm2 jlist | grep -q "\"name\":\"$STORYBOOK_APP_NAME\""; then
+            pm2 reload $STORYBOOK_APP_NAME
+        else
+            pm2 start npm --name $STORYBOOK_APP_NAME -- run storybook:prd
+        fi
+    }
 
     # --no-build 옵션 있으면 바로 실행
     if $N_OPTION; then
         start_app
+        start_storybook
         delete_state_file
         exit 0
     fi
@@ -135,11 +145,12 @@ start)
     npm run build:prd | tee $TEMP_PATH
     # 빌드 성공시 앱 실행
     if [ ! -z "$(grep 'Route (pages)' $TEMP_PATH)" ]; then
-        mv $DIR_PATH/src/.next $DIR_PATH/src/.next.bak
-        mv $DIR_PATH/src/.next_temp $DIR_PATH/src/.next
-        rm -rf $DIR_PATH/src/.next.bak
+        mv $DIR_PATH/.next $DIR_PATH/.next.bak
+        mv $DIR_PATH/.next_temp $DIR_PATH/.next
+        rm -rf $DIR_PATH/.next.bak
         delete_temp_files
         start_app
+        start_storybook
     else
         delete_temp_files
     fi
